@@ -6,7 +6,7 @@ import Footer from "@/components/Footer"
 import CoolHeading from "@/components/CoolHeading"
 
 export default function Page() {
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(0);  // Changed from 1 to 0
 
   const handleStepChange = (step: number) => {
     setCurrentStep(step);
@@ -16,8 +16,8 @@ export default function Page() {
     <>
       <CoolHeading
         title="Welcome to Solana"
-        subtitle="Your Future in Blockchain"
-        visible={currentStep === 1}
+        subtitle="Your journey on-chain starts here"
+        visible={currentStep === 0}  // Changed from 1 to 0
       />
       <SolanaGuide onStepChange={handleStepChange} />
       <Footer />

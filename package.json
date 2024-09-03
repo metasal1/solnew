@@ -21,7 +21,8 @@
     "react-dom": "^18",
     "react-qr-code": "^2.0.15",
     "tailwind-merge": "^2.5.2",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "vercel": "^37.2.1"
   },
   "devDependencies": {
     "@types/node": "^20",

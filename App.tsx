@@ -7,8 +7,7 @@ const App: React.FC = () => {
         <div>
             <CoolHeading
                 title="Solana"
-                subtitle="Your Future in Blockchain"
-            />
+                subtitle="Your journey to Web3 starts here" visible={false} />
             {/* Your other components */}
             <Footer />
         </div>

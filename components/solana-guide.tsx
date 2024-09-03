@@ -332,7 +332,7 @@ function ExploreChainPage() {
 
 // Main SolanaGuide component
 export const SolanaGuide: React.FC<SolanaGuideProps> = ({ onStepChange }) => {
-  const [currentStep, setCurrentStep] = useState(1)
+  const [currentStep, setCurrentStep] = useState(0)
   const [walletAddress, setWalletAddress] = useState('')
   const [walletCreated, setWalletCreated] = useState(false)
   const [solObtained, setSolObtained] = useState(false)
