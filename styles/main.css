@@ -1,0 +1,133 @@
+@keyframes gradientAnimation {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+body {
+    background: linear-gradient(-45deg, #9945FF, #14F195, #9945FF, #14F195);
+    background-size: 400% 400%;
+    animation: gradientAnimation 15s ease infinite;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: inherit;
+    filter: blur(10px);
+    opacity: 0.7;
+    z-index: -1;
+}
+
+footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    text-align: center;
+    padding: 10px 0;
+    font-size: 14px;
+}
+
+footer a {
+    color: #00ff00;
+    text-decoration: none;
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
+
+.cool-heading {
+    font-size: 4rem;
+    font-weight: bold;
+    text-align: center;
+    color: #ffffff;
+    text-shadow:
+        0 0 5px #fff,
+        0 0 10px #fff,
+        0 0 20px #fff,
+        0 0 40px #9945FF,
+        0 0 80px #9945FF,
+        0 0 90px #9945FF,
+        0 0 100px #9945FF,
+        0 0 150px #9945FF;
+    margin-top: 2rem;
+    font-family: 'Arial', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    animation: flicker 1.5s infinite alternate;
+}
+
+@keyframes flicker {
+
+    0%,
+    18%,
+    22%,
+    25%,
+    53%,
+    57%,
+    100% {
+        text-shadow:
+            0 0 5px #fff,
+            0 0 10px #fff,
+            0 0 20px #fff,
+            0 0 40px #9945FF,
+            0 0 80px #9945FF,
+            0 0 90px #9945FF,
+            0 0 100px #9945FF,
+            0 0 150px #9945FF;
+    }
+
+    20%,
+    24%,
+    55% {
+        text-shadow: none;
+    }
+}
+
+.subtitle {
+    font-size: 1.5rem;
+    color: #14F195;
+    text-align: center;
+    margin-top: 1rem;
+    font-style: italic;
+    text-shadow: 0 0 5px #14F195;
+}
+
+/* Ensure content is readable on the new background */
+.card {
+    background-color: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+.animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+}
