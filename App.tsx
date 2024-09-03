@@ -8,7 +8,6 @@ const App: React.FC = () => {
             <CoolHeading
                 title="Solana"
                 subtitle="Your journey to Web3 starts here" visible={false} />
-            {/* Your other components */}
             <Footer />
         </div>
     );

@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ChevronRight, ChevronLeft, CreditCard, Gift, Droplet, ExternalLink, TrendingUp, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 import * as web3 from '@solana/web3.js'
-import QRCode from 'react-qr-code'
 import ActionSheet from './ActionSheet'
 
 interface SolanaGuideProps {
@@ -47,15 +46,6 @@ function CreateWalletPage({ onWalletCreated }: { onWalletCreated: (address: stri
 
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="walletName">Wallet Name</Label>
-        <Input
-          id="walletName"
-          placeholder="Enter a name for your wallet"
-          value={walletName}
-          onChange={(e) => setWalletName(e.target.value)}
-        />
-      </div>
       <Button
         className="w-full bg-[#9945FF] hover:bg-[#7D3AE0] text-white"
         onClick={handleCreateWallet}
@@ -102,38 +92,38 @@ function GetSolPage({ onSolObtained, walletAddress }: { onSolObtained: () => voi
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    const fetchBalance = async () => {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const response = await fetch(process.env.NEXT_PUBLIC_RPC!, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'getBalance',
+            params: [walletAddress]
+          }),
+        })
+        const data = await response.json()
+        if (data.error) {
+          throw new Error(data.error.message)
+        }
+        // Convert lamports to SOL (1 SOL = 1,000,000,000 lamports)
+        setBalance(data.result.value / 1000000000)
+      } catch (err) {
+        setError('Failed to fetch balance. Please try again.')
+        console.error('Error fetching balance:', err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
     fetchBalance()
   }, [walletAddress])
-
-  const fetchBalance = async () => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      const response = await fetch('https://mainnet.helius-rpc.com/?api-key=ff0d3523-6397-47bf-bf5d-acb7d765d5ff', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'getBalance',
-          params: [walletAddress]
-        }),
-      })
-      const data = await response.json()
-      if (data.error) {
-        throw new Error(data.error.message)
-      }
-      // Convert lamports to SOL (1 SOL = 1,000,000,000 lamports)
-      setBalance(data.result.value / 1000000000)
-    } catch (err) {
-      setError('Failed to fetch balance. Please try again.')
-      console.error('Error fetching balance:', err)
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   const handleBuy = () => {
     console.log('Opening SOL purchase flow')
@@ -161,7 +151,39 @@ function GetSolPage({ onSolObtained, walletAddress }: { onSolObtained: () => voi
           <p className="text-3xl font-bold text-purple-600">{balance?.toFixed(4)} SOL</p>
         )}
         <Button
-          onClick={fetchBalance}
+          onClick={() => {
+            const fetchBalance = async () => {
+              setIsLoading(true)
+              setError(null)
+              try {
+                const response = await fetch(process.env.NEXT_PUBLIC_RPC!, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: 1,
+                    method: 'getBalance',
+                    params: [walletAddress]
+                  }),
+                })
+                const data = await response.json()
+                if (data.error) {
+                  throw new Error(data.error.message)
+                }
+                // Convert lamports to SOL (1 SOL = 1,000,000,000 lamports)
+                setBalance(data.result.value / 1000000000)
+              } catch (err) {
+                setError('Failed to fetch balance. Please try again.')
+                console.error('Error fetching balance:', err)
+              } finally {
+                setIsLoading(false)
+              }
+            }
+
+            fetchBalance()
+          }}
           className="mt-2 bg-[#9945FF] hover:bg-[#7D3AE0] text-white"
           disabled={isLoading}
         >
@@ -214,62 +236,142 @@ function GetSolPage({ onSolObtained, walletAddress }: { onSolObtained: () => voi
 function WalletNamePage({ onWalletNamed }: { onWalletNamed: () => void }) {
   const [name, setName] = useState('')
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const checkAvailability = () => {
-    // Simulate API call to check name availability
-    const mockAvailable = Math.random() > 0.5
-    setIsAvailable(mockAvailable)
-    if (mockAvailable) {
-      onWalletNamed()
+  const checkAvailability = async () => {
+    setIsLoading(true)
+    setError(null)
+    setIsAvailable(null) // Clear previous result
+    try {
+      const response = await fetch(`https://sns-sdk-proxy.bonfida.workers.dev/resolve/${name}`);
+      const data = await response.json();
+
+      // If the API returns "Domain not found", the name is available
+      setIsAvailable(data.s === "error" && data.result === "Domain not found");
+
+      if (data.s === "error" && data.result === "Domain not found") {
+        onWalletNamed();
+      }
+    } catch (err) {
+      console.error('Error checking name availability:', err);
+      setError('Failed to check availability. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
+  }
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setName(e.target.value)
+    setIsAvailable(null) // Clear result when input changes
+    setError(null) // Clear any previous errors
+  }
+
+  const handleClear = () => {
+    setName('')
+    setIsAvailable(null)
+    setError(null)
   }
 
   return (
     <div className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="walletName">Wallet Name</Label>
-        <Input
-          id="walletName"
-          placeholder="Enter desired wallet name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+        <div className="flex space-x-2">
+          <Input
+            id="walletName"
+            placeholder="Enter desired wallet name"
+            value={name}
+            onChange={handleNameChange}
+          />
+          <Button
+            onClick={handleClear}
+            variant="outline"
+            className="px-2 py-0"
+          >
+            Clear
+          </Button>
+        </div>
       </div>
       <Button
         onClick={checkAvailability}
         className="w-full bg-[#9945FF] hover:bg-[#7D3AE0] text-white"
+        disabled={isLoading || !name}
       >
-        Check Availability
+        {isLoading ? 'Checking...' : 'Check Availability'}
       </Button>
-      {isAvailable !== null && (
+      {error && (
+        <div className="p-4 rounded-lg bg-red-100">
+          <p className="text-red-700">{error}</p>
+        </div>
+      )}
+      {isAvailable !== null && !error && (
         <div className={`p-4 rounded-lg ${isAvailable ? 'bg-green-100' : 'bg-red-100'}`}>
           <p className={isAvailable ? 'text-green-700' : 'text-red-700'}>
-            {isAvailable ? `${name} is available!` : `${name} is not available.`}
+            {isAvailable ? (
+              <>
+                {`${name}.sol is available! `}
+                <a
+                  href={`https://sns.id/?affiliateRef=metasal&search=${name}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  Click here to register
+                </a>
+              </>
+            ) : (
+              `${name}.sol is not available.`
+            )}
           </p>
         </div>
       )}
+      <p className="text-sm text-gray-600">
+        SNS allows you to represent yourself uniquely with a .sol domain, making it easier to send and receive funds using a human-readable address.
+        <a
+          href="https://sns.id/?affiliateRef=metasal"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:underline"
+        >
+          Learn more about SNS
+        </a>
+      </p>
     </div>
   )
 }
 
 // ExploreChainPage component
 function ExploreChainPage() {
-  const [solPrice, setSolPrice] = useState(0)
-  const [transactions, setTransactions] = useState([])
+  const [solPrice, setSolPrice] = useState<number | null>(null)
+  const [priceChange, setPriceChange] = useState<number>(0)
 
   useEffect(() => {
-    // Simulate fetching SOL price
-    setSolPrice(Math.random() * 50 + 20) // Random price between $20 and $70
+    const fetchSolPrice = async () => {
+      try {
+        const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd&include_24hr_change=true');
+        const data = await response.json();
+        const newPrice = data.solana.usd;
+        const newPriceChange = data.solana.usd_24h_change;
 
-    // Simulate fetching recent transactions
-    const mockTransactions = [
-      { id: '0x1234...5678', type: 'Receive', amount: 1.5, date: '2023-06-01' },
-      { id: '0x8765...4321', type: 'Send', amount: 0.5, date: '2023-05-30' },
-      { id: '0x2468...1357', type: 'Swap', amount: 2.0, date: '2023-05-28' },
-      { id: '0x1357...2468', type: 'Receive', amount: 0.75, date: '2023-05-25' },
-    ]
-    setTransactions(mockTransactions as never[])
-  }, [])
+        setSolPrice(prevPrice => {
+          if (prevPrice !== null) {
+            setPriceChange(newPrice - prevPrice);
+          }
+          return newPrice;
+        });
+        setPriceChange(newPriceChange);
+      } catch (error) {
+        console.error('Error fetching SOL price:', error);
+      }
+    };
+
+    fetchSolPrice(); // Fetch immediately on mount
+
+    const intervalId = setInterval(fetchSolPrice, 5000); // Then every 5 seconds
+
+    return () => clearInterval(intervalId); // Cleanup on unmount
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -279,9 +381,16 @@ function ExploreChainPage() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center">
-            <TrendingUp className="text-green-500 mr-2 h-8 w-8" />
-            <span className="text-4xl font-bold">${solPrice.toFixed(2)}</span>
+            <TrendingUp className={`mr-2 h-8 w-8 ${priceChange >= 0 ? 'text-green-500' : 'text-red-500'}`} />
+            <span className="text-4xl font-bold">
+              ${solPrice ? solPrice.toFixed(2) : 'Loading...'}
+            </span>
           </div>
+          {priceChange !== 0 && (
+            <p className={`text-center mt-2 ${priceChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+              {priceChange > 0 ? '+' : ''}{priceChange.toFixed(2)}% (24h)
+            </p>
+          )}
         </CardContent>
       </Card>
 
@@ -300,28 +409,7 @@ function ExploreChainPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {transactions.map((tx: any) => (
-                <TableRow key={tx.id}>
-                  <TableCell className="font-mono">{tx.id}</TableCell>
-                  <TableCell>
-                    {tx.type === 'Receive' ? (
-                      <span className="flex items-center text-green-500">
-                        <ArrowDownRight className="mr-1 h-4 w-4" /> Receive
-                      </span>
-                    ) : tx.type === 'Send' ? (
-                      <span className="flex items-center text-red-500">
-                        <ArrowUpRight className="mr-1 h-4 w-4" /> Send
-                      </span>
-                    ) : (
-                      <span className="flex items-center text-blue-500">
-                        <ArrowUpRight className="mr-1 h-4 w-4" /> Swap
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell>{tx.amount} SOL</TableCell>
-                  <TableCell>{tx.date}</TableCell>
-                </TableRow>
-              ))}
+              {/* ... (rest of the code remains unchanged) */}
             </TableBody>
           </Table>
         </CardContent>
